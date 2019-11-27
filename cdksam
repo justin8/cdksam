@@ -1,0 +1,31 @@
+#!/bin/bash
+
+find_function_name() {
+	short_name=$1
+	cat template.yaml | grep -Po "$short_name[A-F0-9]{8}(?=:$)"
+}
+
+add_command() {
+	command+=" $1"
+}
+
+generate_template() {
+	cdk synth --no-staging > template.yaml
+}
+
+command=""
+
+generate_template
+
+if [[ "$1" == "local" ]]; then
+	add_command local
+	shift
+	if [[ "$1" == "invoke" ]]; then
+		add_command invoke
+		shift
+		add_command "$(find_function_name $1)"
+		shift
+	fi
+fi
+
+sam $command "$@"
